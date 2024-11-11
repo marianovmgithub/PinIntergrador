@@ -3,6 +3,7 @@
 **Instructivo Paso a Paso para la Ejecución**
 
 **Paso 1: Preparar la Máquina Virtual con Ubuntu**
+
 Asegúrate de que tu máquina virtual tenga Docker instalado.
 
 Instala Jenkins en Docker:
