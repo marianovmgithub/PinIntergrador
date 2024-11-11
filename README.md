@@ -8,6 +8,7 @@ Asegúrate de que tu máquina virtual tenga Docker instalado.
 Instala Jenkins en Docker:
 
 Copiar código
+
 docker run -d -p 8080:8080 -p 50000:50000 --name jenkins --group-add $(getent group docker | cut -d: -f3) -v jenkins_home:/var/jenkins_home jenkins/jenkins:lts
 
 **Nota:** Verifica que el contenedor de Jenkins tenga acceso al socket de Docker y que esté en el mismo grupo de usuarios (docker) para ejecutar comandos de Docker y kubectl.
@@ -46,6 +47,6 @@ docker run -d -p 8080:8080 -p 50000:50000 --name jenkins --group-add $(getent gr
 - Agrega Prometheus como fuente de datos en Grafana y configura un dashboard para visualizar las métricas recolectadas.
 
 **Consideraciones al Ejecutar Jenkins en Docker**
-**- Acceso a la Red:** Asegúrate de que el contenedor de Jenkins tenga acceso a Internet y pueda comunicarse con AWS y los clústeres de Kubernetes.
-**- Persistencia de Datos:** Utiliza volúmenes de Docker (-v) para mantener los datos de Jenkins entre reinicios.
-**- Permisos:** Verifica que el contenedor de Jenkins tenga los permisos necesarios para ejecutar comandos de kubectl y eksctl.
+- **Acceso a la Red:** Asegúrate de que el contenedor de Jenkins tenga acceso a Internet y pueda comunicarse con AWS y los clústeres de Kubernetes.
+- **Persistencia de Datos:** Utiliza volúmenes de Docker (-v) para mantener los datos de Jenkins entre reinicios.
+- **Permisos:** Verifica que el contenedor de Jenkins tenga los permisos necesarios para ejecutar comandos de kubectl y eksctl.
