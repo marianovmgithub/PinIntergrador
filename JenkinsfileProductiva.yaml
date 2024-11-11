@@ -1,0 +1,53 @@
+pipeline {
+    agent any
+    stages {
+        stage('Setup AWS CLI & eksctl') { // Etapa para preparar las herramientas necesarias
+            steps {
+                // Instalación de AWS CLI para interactuar con los servicios de AWS
+                // Instalación de eksctl para gestionar clústeres de EKS en AWS
+                sh '''
+                # Descarga e instala la CLI de AWS
+                curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+                unzip awscliv2.zip
+                sudo ./aws/install
+
+                # Descarga e instala eksctl
+                curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+                sudo mv /tmp/eksctl /usr/local/bin
+                '''
+            }
+        }
+        stage('Crear Clúster EKS - Productivo') { // Etapa para crear el clúster de producción
+            steps {
+                // Comando para crear un clúster EKS en AWS con los parámetros especificados
+                // Usamos instancias t3.micro para aprovechar el free tier
+                sh '''
+                eksctl create cluster \
+                --name eks-productivo \  # Nombre del clúster, modificar si es necesario
+                --region us-east-1 \     # Región que está en el free tier de AWS
+                --node-type t3.micro \   # Tipo de nodo en free tier
+                --nodes 2 \              # Número de nodos para mantener el uso en free tier
+                --managed \              # Clúster gestionado por AWS para facilidad de operación
+                --ssh-access \           # Permitir acceso SSH a los nodos
+                --ssh-public-key pin     # Nombre de tu clave SSH, asegúrate de cargarla en AWS
+                '''
+            }
+        }
+        stage('Desplegar NGINX') { // Etapa para desplegar la aplicación NGINX en el clúster
+            steps {
+                // Se aplica un archivo YAML de Kubernetes para desplegar NGINX con 3 réplicas
+                sh '''
+                kubectl apply -f https://raw.githubusercontent.com/<tu-usuario>/proyecto/nginx-deployment.yaml
+                '''
+            }
+        }
+    }
+    post {
+        success {
+            echo 'Infraestructura productiva desplegada exitosamente.'
+        }
+        failure {
+            echo 'Error en la creación de la infraestructura productiva. Revisa los logs.'
+        }
+    }
+}
