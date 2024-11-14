@@ -1,0 +1,39 @@
+pipeline {
+    agent any
+    stages {
+        stage('Setup Prometheus') {
+            steps {
+                script {
+                    // Descarga la imagen de Prometheus desde Docker Hub y la ejecuta
+                    sh 'docker run -d --name prometheus -p 9090:9090 prom/prometheus'
+                }
+            }
+        }
+        stage('Setup Telegraf') {
+            steps {
+                script {
+                    // Configura y ejecuta Telegraf (puedes modificar la configuración según sea necesario)
+                    sh 'docker run -d --name telegraf -v /ruta/telegraf.conf:/etc/telegraf/telegraf.conf:ro telegraf'
+                }
+            }
+        }
+        stage('Setup Grafana') {
+            steps {
+                script {
+                    // Descarga la imagen de Grafana y la ejecuta en el puerto 3000
+                    sh 'docker run -d --name grafana -p 3000:3000 grafana/grafana'
+                }
+            }
+        }
+    }
+    post {
+        success {
+            // Mensaje de éxito en caso de que todos los servicios se hayan iniciado correctamente
+            echo 'Prometheus, Telegraf y Grafana se han desplegado con éxito para la telemetría.'
+        }
+        failure {
+            // Mensaje de error si falla alguna etapa
+            echo 'Hubo un error en la configuración de la telemetría.'
+        }
+    }
+}
