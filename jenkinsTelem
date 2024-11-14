@@ -13,7 +13,7 @@ pipeline {
             steps {
                 script {
                     // Configura y ejecuta Telegraf (puedes modificar la configuración según sea necesario)
-                    sh 'docker run -d --name telegraf -v /ruta/telegraf.conf:/etc/telegraf/telegraf.conf:ro telegraf'
+                    sh 'docker run -d --name telegraf -v /home/telegraf.conf:/etc/telegraf/telegraf.conf:ro telegraf'
                 }
             }
         }
