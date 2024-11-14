@@ -1,0 +1,39 @@
+pipeline {
+    agent any
+    stages {
+        stage('Checkout Code') {
+            steps {
+                // Descarga el código fuente del repositorio (puedes personalizar la URL del repositorio)
+                git url: 'https://github.com/octocat/Hello-World.git'
+            }
+        }
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    // Construye una imagen Docker con un Dockerfile presente en el repositorio
+                    sh 'docker build -t mi-app-nginx .'
+                }
+            }
+        }
+        stage('Run Docker Container') {
+            steps {
+                script {
+                    // Detiene el contenedor si ya se está ejecutando y luego lo elimina
+                    sh 'docker stop mi-app-container || true && docker rm mi-app-container || true'
+                    // Inicia un contenedor Docker con la imagen construida y lo expone en el puerto 80
+                    sh 'docker run -d --name mi-app-container -p 80:80 mi-app-nginx'
+                }
+            }
+        }
+    }
+    post {
+        success {
+            // Muestra un mensaje en la consola de Jenkins si la construcción es exitosa
+            echo '¡Contenedor Nginx desplegado con éxito!'
+        }
+        failure {
+            // Muestra un mensaje en la consola si hay un fallo
+            echo 'Hubo un error en el despliegue.'
+        }
+    }
+}
