@@ -4,7 +4,7 @@ pipeline {
         stage('Checkout Code') {
             steps {
                 // Descarga el código fuente del repositorio (puedes personalizar la URL del repositorio)
-                git url: 'https://github.com/octocat/Hello-World.git'
+                git url: 'https://github.com/marcopompili/docker-nginx-git.git'
             }
         }
         stage('Build Docker Image') {
