@@ -25,8 +25,8 @@ pipeline {
                     sh 'mkdir -p /home/nuevavirtual/grafana/provisioning/datasources'
 
                     // Copia los archivos de configuración de dashboards y datasources
-                    sh 'cp /home/nuevavirtual/dashboard.json /ruta/grafana/provisioning/dashboards/dashboard.json'
-                    sh 'cp /home/nuevavirtual/datasource.yml /ruta/grafana/provisioning/datasources/datasource.yml'
+                    sh 'cp /home/nuevavirtual/dashboard.json /home/nuevavirtual/grafana/provisioning/dashboards/dashboard.json'
+                    sh 'cp /home/nuevavirtual/datasource.yml /home/nuevavirtual/grafana/provisioning/datasources/datasource.yml'
 
                     // Ejecuta Grafana con la configuración predefinida
                     sh '''
