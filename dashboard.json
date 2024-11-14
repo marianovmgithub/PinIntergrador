@@ -1,0 +1,85 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "Dashboard de Telegraf - Monitoreo de Contenedores",
+    "timezone": "browser",
+    "panels": [
+      {
+        "type": "graph",
+        "title": "Uso de CPU por Contenedor",
+        "gridPos": { "x": 0, "y": 0, "w": 12, "h": 6 },
+        "targets": [
+          {
+            "expr": "rate(container_cpu_usage_seconds_total[5m])",
+            "legendFormat": "{{name}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {
+            "format": "percent",
+            "label": "Uso de CPU",
+            "logBase": 1,
+            "max": 1,
+            "min": 0
+          }
+        ]
+      },
+      {
+        "type": "graph",
+        "title": "Uso de Memoria por Contenedor",
+        "gridPos": { "x": 12, "y": 0, "w": 12, "h": 6 },
+        "targets": [
+          {
+            "expr": "container_memory_usage_bytes",
+            "legendFormat": "{{name}}",
+            "refId": "B"
+          }
+        ],
+        "yaxes": [
+          {
+            "format": "bytes",
+            "label": "Uso de Memoria",
+            "logBase": 1
+          }
+        ]
+      },
+      {
+        "type": "singlestat",
+        "title": "Número de Contenedores Activos",
+        "gridPos": { "x": 0, "y": 6, "w": 6, "h": 4 },
+        "targets": [
+          {
+            "expr": "count(container_last_seen{job='docker'})",
+            "refId": "C"
+          }
+        ],
+        "format": "none"
+      },
+      {
+        "type": "table",
+        "title": "Uso de Disco por Contenedor",
+        "gridPos": { "x": 6, "y": 6, "w": 18, "h": 6 },
+        "targets": [
+          {
+            "expr": "container_fs_usage_bytes",
+            "legendFormat": "{{name}}",
+            "refId": "D"
+          }
+        ],
+        "columns": [
+          { "text": "Contenedor", "value": "name" },
+          { "text": "Uso de Disco (Bytes)", "value": "value" }
+        ]
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "refresh": "10s",
+    "schemaVersion": 16,
+    "version": 1
+  },
+  "overwrite": true
+}
