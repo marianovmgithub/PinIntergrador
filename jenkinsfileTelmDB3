@@ -1,0 +1,92 @@
+pipeline {
+    agent any
+    stages {
+        stage('Setup Prometheus') {
+            steps {
+                script {
+                    // Crea el archivo prometheus.yml en el contenedor de Prometheus
+                    writeFile file: '/home/nuevavirtual/prometheus.yml', text: ''' 
+global:
+  scrape_interval: 15s  # Intervalo global para hacer scrape
+
+scrape_configs:
+  - job_name: 'telegraf'  # Nombre del job de scrape
+    static_configs:
+      - targets: ['telegraf:9273']  # Usa el nombre del contenedor 'telegraf' y el puerto 9273
+
+  - job_name: 'prometheus'  # Monitoriza el propio Prometheus
+    static_configs:
+      - targets: ['localhost:9090']  # Monitoriza el propio Prometheus
+'''
+
+                    // Descarga la imagen de Prometheus y la ejecuta
+                    sh 'docker run -d --name prometheus -p 9090:9090 \
+                        -v /home/nuevavirtual/prometheus.yml:/etc/prometheus/prometheus.yml \
+                        prom/prometheus'
+                }
+            }
+        }
+        stage('Setup Telegraf') {
+            steps {
+                script {
+                    // Crea el archivo telegraf.conf en el contenedor de Telegraf
+                    writeFile file: '/home/nuevavirtual/telegraf.conf', text: '''
+[agent]
+  interval = "10s"  # Intervalo de recopilación de métricas
+  round_interval = true
+
+[[outputs.prometheus_client]]
+  listen = ":9273"  # Puerto en el que se exponen las métricas para Prometheus
+
+[[inputs.docker]]
+  endpoint = "unix:///var/run/docker.sock"  # Ruta al socket Docker
+  container_names = []  # Dejar vacío para monitorear todos los contenedores
+  gather_services = false
+  timeout = "5s"
+  perdevice = true
+  total = true
+
+[inputs.docker.tagdrop]
+  name = ["telegraf"]
+'''
+
+                    // Configura y ejecuta Telegraf
+                    sh 'docker run -d --name telegraf -v /home/nuevavirtual/telegraf.conf:/etc/telegraf/telegraf.conf:ro telegraf'
+                }
+            }
+        }
+        stage('Setup Grafana') {
+            steps {
+                script {
+                    // Crea los directorios necesarios para dashboards y data sources
+                    sh 'mkdir -p /home/nuevavirtual/grafana/provisioning/dashboards'
+                    sh 'mkdir -p /home/nuevavirtual/grafana/provisioning/datasources'
+
+                    // Copia los archivos de configuración de dashboards y datasources
+                    sh 'cp /home/nuevavirtual/dashboard.json /home/nuevavirtual/grafana/provisioning/dashboards/dashboard.json'
+                    sh 'cp /home/nuevavirtual/datasource.yml /home/nuevavirtual/grafana/provisioning/datasources/datasource.yml'
+
+                    // Ejecuta Grafana con la configuración predefinida
+                    sh '''
+                    docker run -d --name grafana -p 3000:3000 \
+                    -v /home/nuevavirtual/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards \
+                    -v /home/nuevavirtual/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources \
+                    grafana/grafana \
+                    -e "GF_SECURITY_ADMIN_USER=admin" \
+                    -e "GF_SECURITY_ADMIN_PASSWORD=admin" \
+                    -e "GF_SECURITY_ALLOW_EMBEDDING=true" \
+                    -e "GF_SECURITY_ANONYMOUS_ENABLED=true"
+                    '''
+                }
+            }
+        }
+    }
+    post {
+        success {
+            echo 'Prometheus, Telegraf y Grafana se han desplegado con éxito con un dashboard configurado.'
+        }
+        failure {
+            echo 'Hubo un error en la configuración de la telemetría.'
+        }
+    }
+}
