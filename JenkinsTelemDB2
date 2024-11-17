@@ -1,0 +1,74 @@
+pipeline {
+    agent any
+    stages {
+        stage('Setup Prometheus') {
+            steps {
+                script {
+                    // Descarga la imagen de Prometheus y la ejecuta
+                    sh 'docker run -d --name prometheus -p 9090:9090 prom/prometheus'
+                }
+            }
+        }
+        stage('Setup Telegraf') {
+            steps {
+                script {
+                    // Configura y ejecuta Telegraf
+                    sh 'docker run -d --name telegraf -v /home/nuevavirtual/telegraf.conf:/etc/telegraf/telegraf.conf:ro telegraf'
+                }
+            }
+        }
+        stage('Setup Grafana') {
+            steps {
+                script {
+                    // Crea los directorios necesarios para dashboards y data sources
+                    sh 'mkdir -p /home/nuevavirtual/grafana/provisioning/dashboards'
+                    sh 'mkdir -p /home/nuevavirtual/grafana/provisioning/datasources'
+
+                    // Copia los archivos de configuración de dashboards y datasources
+                    sh 'cp /home/nuevavirtual/dashboard.json /home/nuevavirtual/grafana/provisioning/dashboards/dashboard.json'
+                    sh 'cp /home/nuevavirtual/datasource.yml /home/nuevavirtual/grafana/provisioning/datasources/datasource.yml'
+
+                    // Ejecuta Grafana con la configuración predefinida
+                    sh '''
+                    docker run -d --name grafana -p 3000:3000 \
+                    -e "GF_SECURITY_ADMIN_USER=admin" \  # Establece el usuario admin
+                    -e "GF_SECURITY_ADMIN_PASSWORD=admin" \  # Establece la contraseña admin
+                    -e "GF_SECURITY_ALLOW_EMBEDDING=true" \  # Permite la integración de otros contenidos
+                    -e "GF_SECURITY_ANONYMOUS_ENABLED=true" \  # Habilita el acceso anónimo
+                    -v /home/nuevavirtual/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards \
+                    -v /home/nuevavirtual/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources \
+                    grafana/grafana
+                    '''
+                }
+            }
+        }
+        stage('Wait for Grafana to start') {
+            steps {
+                script {
+                    // Espera para asegurarse de que Grafana se ha iniciado completamente
+                    sh 'sleep 10'  // Ajusta el tiempo si es necesario
+                }
+            }
+        }
+        stage('Upload Dashboard to Grafana') {
+            steps {
+                script {
+                    // Subir el dashboard automáticamente usando la API de Grafana
+                    sh '''
+                    curl -X POST -H "Content-Type: application/json" \
+                    -d @/home/nuevavirtual/dashboard.json \
+                    http://admin:admin@localhost:3000/api/dashboards/db
+                    '''
+                }
+            }
+        }
+    }
+    post {
+        success {
+            echo 'Prometheus, Telegraf y Grafana se han desplegado con éxito con un dashboard configurado.'
+        }
+        failure {
+            echo 'Hubo un error en la configuración de la telemetría.'
+        }
+    }
+}
