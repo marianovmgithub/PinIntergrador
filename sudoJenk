@@ -1,0 +1,17 @@
+docker exec -it jenkins-container-name /bin/bash
+
+
+apt-get update && apt-get install -y sudo
+usermod -aG sudo jenkins
+
+
+pipeline {
+    agent any
+    stages {
+        stage('Verificar Sudo') {
+            steps {
+                sh 'sudo whoami'
+            }
+        }
+    }
+}
